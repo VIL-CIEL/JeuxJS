@@ -88,8 +88,22 @@ exp.ws('/qr', function (ws, req) {
         console.log('De %s %s, message :%s', req.connection.remoteAddress,
             req.connection.remotePort, message);
         if (message == bonneReponse) {
-            NouvelleQuestion();
+            aWss.broadcast('Réponse juste');
+            setTimeout(() => {
+                console.log('waitTime');
+                NouvelleQuestion();
+            }, '1000');
+            
         }
+        else {
+            aWss.broadcast('Réponse fausse');
+            setTimeout(() => {
+                console.log('waitTime');
+                aWss.broadcast(question);
+            }, '1000');
+            
+        }
+        
     }
 
 
