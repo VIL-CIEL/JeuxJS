@@ -74,7 +74,7 @@ var bonneReponse = 0;
 exp.ws('/qr', function (ws, req) {
     console.log('Connection WebSocket %s sur le port %s',
         req.connection.remoteAddress, req.connection.remotePort);
-    NouvelleQuestion();
+    NouvelleQBase2to10();
 
     ws.on('message', TraiterReponse);
 
@@ -87,11 +87,12 @@ exp.ws('/qr', function (ws, req) {
     function TraiterReponse(message) {
         console.log('De %s %s, message :%s', req.connection.remoteAddress,
             req.connection.remotePort, message);
+
         if (message == bonneReponse) {
             aWss.broadcast('Réponse juste');
             setTimeout(() => {
                 console.log('waitTime');
-                NouvelleQuestion();
+                NouvelleQBase2to10();
             }, '1000');
             
         }
@@ -105,14 +106,33 @@ exp.ws('/qr', function (ws, req) {
         }
         
     }
-
-
-    function NouvelleQuestion() {
+    function NouvelleQMult() {
         var x = GetRandomInt(11);
         var y = GetRandomInt(11);
         question = x + '*' + y + ' =  ?';
         bonneReponse = x * y;
         aWss.broadcast(question);
+    }
+
+    function NouvelleQBase2to10() {
+        var rInt = GetRandomInt(255);
+        var b2 = ConvB2(rInt);
+        question = 'Convertir ' + b2 + ' en base 10';
+        bonneReponse = rInt;
+        aWss.broadcast(question);
+    }
+
+    function ConvB2(nmbr) {
+        var b = '';
+        while (nmbr > 0) {
+            b += nmbr % 2;
+            nmbr = Math.floor(nmbr/ 2);
+        }
+        let reversed = '';
+        for (let i = b.length - 1; i >= 0; i--) {
+            reversed += b[i];
+        }
+        return reversed;
     }
 
     function GetRandomInt(max) {
