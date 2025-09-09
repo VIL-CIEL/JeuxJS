@@ -8,7 +8,7 @@ exp.use(express.static(__dirname + '/www'));
 
 exp.get('/', function (req, res) {
     console.log('Reponse a un client'); 
-    res.sendFile(__dirname + '/www/textchat.html');
+    res.sendFile(__dirname + '/www/qr.html');
 }); 
 
 exp.use(function (err, req, res, next) {
@@ -27,8 +27,8 @@ exp.ws('/echo', function (ws, req) {
         req.connection.remoteAddress, req.connection.remotePort);
 
     ws.on('message', function (message) {
-        message = ws._socket._peername.address + ws._socket._peername.port + ' : ' + message; 
-        aWss.broadcast(message);
+        //message = ws._socket._peername.address + ws._socket._peername.port + ' : ' + message; 
+        //aWss.broadcast(message);
         console.log('De %s %s, message :%s', req.connection.remoteAddress,
             req.connection.remotePort, message);
         ws.send(message);
