@@ -1,4 +1,75 @@
 ﻿'use strict';
+class CQr {
+    constructor() {
+        this.question = '?';
+        this.bonneReponse = '?';
+        this.joueurs = new Array();
+    }
+
+    GetRandomInt(max) {
+        return Math.floor(Math.random() * Math.floor(max));
+    };
+
+    TraiterReponse(wsClient, message, req) {
+        console.log('De %s %s, message :%s', req.connection.remoteAddress,
+            req.connection.remotePort, message);
+
+        if (message == this.bonneReponse) {
+            aWss.broadcast('Réponse juste');
+            setTimeout(() => {
+                console.log('waitTime');
+                this.NouvelleQMult();
+            }, '1000');
+
+        }
+        else {
+            aWss.broadcast('Réponse fausse');
+            setTimeout(() => {
+                console.log('waitTime');
+                aWss.broadcast(this.question);
+            }, '1000');
+
+        }
+
+    };
+
+    NouvelleQMult() {
+        var x = this.GetRandomInt(11);
+        var y = this.GetRandomInt(11);
+        this.question = x + '*' + y + ' =  ?';
+        this.bonneReponse = x * y;
+        aWss.broadcast(this.question);
+    };
+
+    NouvelleQBase2to10() {
+        var rInt = this.GetRandomInt(255);
+        var b2 = this.ConvB2(rInt);
+        this.question = 'Convertir ' + b2 + ' en base 10';
+        this.bonneReponse = rInt;
+        aWss.broadcast(this.question);
+    };
+    ConvB2(nmbr) {
+        var b = '';
+        while (nmbr > 0) {
+            b += nmbr % 2;
+            nmbr = Math.floor(nmbr/ 2);
+        }
+        let reversed = '';
+        for (let i = b.length - 1; i >= 0; i--) {
+            reversed += b[i];
+        }
+        return reversed;
+    }
+
+
+    EnvoyerResultatDiff(){
+
+    };
+
+    Deconnecter(){
+
+    };
+} 
 
 /*  *********************** Serveur Web ***************************   */
 //
@@ -66,77 +137,98 @@ aWss.broadcast = function broadcast(data) {
     });
 }; 
 
-var question = '?';
-var bonneReponse = 0;
+//var question = '?';
+//var bonneReponse = 0;
 
-// Connexion des clients a la WebSocket /qr et evenements associés 
-// Questions/reponses 
+// Connexion des clients a la WebSocket /qr et evenements associés
+// Questions/reponses
+//exp.ws('/qr', function (ws, req) {
+//    console.log('Connection WebSocket %s sur le port %s',
+//        req.connection.remoteAddress, req.connection.remotePort);
+//    NouvelleQBase2to10();
+
+//    ws.on('message', TraiterReponse);
+
+//    ws.on('close', function (reasonCode, description) {
+//        console.log('Deconnexion WebSocket %s sur le port %s',
+//            req.connection.remoteAddress, req.connection.remotePort);
+//    });
+
+
+//    function TraiterReponse(message) {
+//        console.log('De %s %s, message :%s', req.connection.remoteAddress,
+//            req.connection.remotePort, message);
+
+//        if (message == bonneReponse) {
+//            aWss.broadcast('Réponse juste');
+//            setTimeout(() => {
+//                console.log('waitTime');
+//                NouvelleQBase2to10();
+//            }, '1000');
+
+//        }
+//        else {
+//            aWss.broadcast('Réponse fausse');
+//            setTimeout(() => {
+//                console.log('waitTime');
+//                aWss.broadcast(question);
+//            }, '1000');
+
+//        }
+
+//    }
+//    function NouvelleQMult() {
+//        var x = GetRandomInt(11);
+//        var y = GetRandomInt(11);
+//        question = x + '*' + y + ' =  ?';
+//        bonneReponse = x * y;
+//        aWss.broadcast(question);
+//    }
+
+//    function NouvelleQBase2to10() {
+//        var rInt = GetRandomInt(255);
+//        var b2 = ConvB2(rInt);
+//        question = 'Convertir ' + b2 + ' en base 10';
+//        bonneReponse = rInt;
+//        aWss.broadcast(question);
+//    }
+
+//    function ConvB2(nmbr) {
+//        var b = '';
+//        while (nmbr > 0) {
+//            b += nmbr % 2;
+//            nmbr = Math.floor(nmbr/ 2);
+//        }
+//        let reversed = '';
+//        for (let i = b.length - 1; i >= 0; i--) {
+//            reversed += b[i];
+//        }
+//        return reversed;
+//    }
+
+//    function GetRandomInt(max) {
+//        return Math.floor(Math.random() * Math.floor(max));
+//    }
+
+//});
+
+/*  *************** serveur WebSocket express /qr *********************   */
+// 
+var jeuxQr = new CQr;
 exp.ws('/qr', function (ws, req) {
-    console.log('Connection WebSocket %s sur le port %s',
-        req.connection.remoteAddress, req.connection.remotePort);
-    NouvelleQBase2to10();
+    
+    console.log('Connection WebSocket %s sur le port %s', req.connection.remoteAddress,
+        req.connection.remotePort);
+    jeuxQr.NouvelleQMult();
 
-    ws.on('message', TraiterReponse);
+    ws.on('message', TMessage);
+    function TMessage(message) {
+        jeuxQr.TraiterReponse(ws, message, req);
+    }
 
     ws.on('close', function (reasonCode, description) {
         console.log('Deconnexion WebSocket %s sur le port %s',
             req.connection.remoteAddress, req.connection.remotePort);
     });
-
-
-    function TraiterReponse(message) {
-        console.log('De %s %s, message :%s', req.connection.remoteAddress,
-            req.connection.remotePort, message);
-
-        if (message == bonneReponse) {
-            aWss.broadcast('Réponse juste');
-            setTimeout(() => {
-                console.log('waitTime');
-                NouvelleQBase2to10();
-            }, '1000');
-            
-        }
-        else {
-            aWss.broadcast('Réponse fausse');
-            setTimeout(() => {
-                console.log('waitTime');
-                aWss.broadcast(question);
-            }, '1000');
-            
-        }
-        
-    }
-    function NouvelleQMult() {
-        var x = GetRandomInt(11);
-        var y = GetRandomInt(11);
-        question = x + '*' + y + ' =  ?';
-        bonneReponse = x * y;
-        aWss.broadcast(question);
-    }
-
-    function NouvelleQBase2to10() {
-        var rInt = GetRandomInt(255);
-        var b2 = ConvB2(rInt);
-        question = 'Convertir ' + b2 + ' en base 10';
-        bonneReponse = rInt;
-        aWss.broadcast(question);
-    }
-
-    function ConvB2(nmbr) {
-        var b = '';
-        while (nmbr > 0) {
-            b += nmbr % 2;
-            nmbr = Math.floor(nmbr/ 2);
-        }
-        let reversed = '';
-        for (let i = b.length - 1; i >= 0; i--) {
-            reversed += b[i];
-        }
-        return reversed;
-    }
-
-    function GetRandomInt(max) {
-        return Math.floor(Math.random() * Math.floor(max));
-    }
 
 }); 
