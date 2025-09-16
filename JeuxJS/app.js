@@ -10,28 +10,18 @@ class CQr {
         return Math.floor(Math.random() * Math.floor(max));
     };
 
-    TraiterReponse(wsClient, message, req) {
+    TraiterReponse(wsClient, message) {
         var mess = JSON.parse(message);
-        console.log('De %s %s, message :%s', req.connection.remoteAddress,
-            req.connection.remotePort, mess);
-
-        if (mess['reponse'] == this.bonneReponse) {
-            aWss.broadcast('Réponse juste');
-            setTimeout(() => {
-                console.log('waitTime');
-                this.NouvelleQMult();
-            }, '1000');
-
+        if (mess.reponse == this.bonneReponse) {
+            this.question = 'Bonne reponse de ' + mess.nom;
         }
         else {
-            aWss.broadcast('Réponse fausse, ' + mess['nom']);
-            setTimeout(() => {
-                console.log('waitTime');
-                aWss.broadcast(this.question);
-            }, '1000');
-
+            this.question = 'Mauvaise reponse de ' + mess.nom;
         }
-
+        this.EnvoyerResultatDiff();
+        setTimeout(() => {  //affichage de la question 3s après 
+            this.NouvelleQMult();
+        }, 3000);
     };
 
     NouvelleQMult() {
@@ -39,7 +29,7 @@ class CQr {
         var y = this.GetRandomInt(11);
         this.question = x + '*' + y + ' =  ?';
         this.bonneReponse = x * y;
-        aWss.broadcast(this.question);
+        this.EnvoyerResultatDiff();
     };
 
     NouvelleQBase2to10() {
@@ -47,7 +37,7 @@ class CQr {
         var b2 = this.ConvB2(rInt);
         this.question = 'Convertir ' + b2 + ' en base 10';
         this.bonneReponse = rInt;
-        aWss.broadcast(this.question);
+        this.EnvoyerResultatDiff();
     };
     ConvB2(nmbr) {
         var b = '';
@@ -63,8 +53,11 @@ class CQr {
     }
 
 
-    EnvoyerResultatDiff(){
-
+    EnvoyerResultatDiff() {
+        var messagePourLesClients = {
+            question: this.question
+        };
+        aWss.broadcast(JSON.stringify(messagePourLesClients));
     };
 
     Deconnecter(){
