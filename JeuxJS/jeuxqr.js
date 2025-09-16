@@ -22,6 +22,7 @@ class CQr {
                 var nJoueur = {
                     nom: mess.nom,
                     score: 0,
+                    state: 'Connecte',
                     ws: wsClient
                 };
 
@@ -31,6 +32,7 @@ class CQr {
                 });
                 this.EnvoyerResultatDiff();
             }
+            this.joueurs[indexjoueur].state = 'Connecte';
             if (mess.reponse == this.bonneReponse) {
                 this.joueurs[indexjoueur].score += 1;
                 this.question = 'Bonne reponse de ' + mess.nom;
@@ -98,7 +100,8 @@ class CQr {
         this.joueurs.forEach(function each(joueur) {
             joueursSimple.push({
                 nom: joueur.nom,
-                score: joueur.score
+                score: joueur.score,
+                state: joueur.state
             });
         });
 
@@ -129,7 +132,9 @@ class CQr {
         });
         if (indexjoueur != -1) {
             this.joueurs[indexjoueur].ws = undefined;
+            this.joueurs[indexjoueur].state = 'Deconnecte';
         }
+        this.EnvoyerResultatDiff();
     }
 }
 

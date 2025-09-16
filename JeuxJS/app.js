@@ -39,8 +39,8 @@ exp.ws('/echo', function (ws, req) {
 
     ws.on('close', function (reasonCode, description) {
         console.log('Deconnexion WebSocket %s sur le port %s', 
-        req.connection.remoteAddress, req.connection.remotePort);
-        jeuxQr.Deconnecter(ws);
+            req.connection.remoteAddress, req.connection.remotePort);
+        jeuxQr.Deconnecter(ws); 
     }); 
 
 });
