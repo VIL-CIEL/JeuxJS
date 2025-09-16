@@ -40,6 +40,9 @@ function ControleIHM() {
 }
 
 function BPEnvoyer() {
-    ws.send(document.getElementById('messageEnvoi').value);
+    ws.send(JSON.stringify({
+        nom: document.getElementById('nom').value,
+        reponse: document.getElementById('messageEnvoi').value
+    }));
 } 
 

@@ -11,10 +11,11 @@ class CQr {
     };
 
     TraiterReponse(wsClient, message, req) {
+        var mess = JSON.parse(message);
         console.log('De %s %s, message :%s', req.connection.remoteAddress,
-            req.connection.remotePort, message);
+            req.connection.remotePort, mess);
 
-        if (message == this.bonneReponse) {
+        if (mess['reponse'] == this.bonneReponse) {
             aWss.broadcast('Réponse juste');
             setTimeout(() => {
                 console.log('waitTime');
@@ -23,7 +24,7 @@ class CQr {
 
         }
         else {
-            aWss.broadcast('Réponse fausse');
+            aWss.broadcast('Réponse fausse, ' + mess['nom']);
             setTimeout(() => {
                 console.log('waitTime');
                 aWss.broadcast(this.question);
