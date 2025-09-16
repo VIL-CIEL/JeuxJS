@@ -1,132 +1,7 @@
 ﻿'use strict';
-class CQr {
-    constructor() {
-        this.question = '?';
-        this.tempQuestion = '?';
-        this.bonneReponse = '?';
-        this.joueurs = new Array();
-    }
-
-    GetRandomInt(max) {
-        return Math.floor(Math.random() * Math.floor(max));
-    };
-
-    TraiterReponse(wsClient, message) {
-        var mess = JSON.parse(message);
-        var indexjoueur = this.joueurs.findIndex(function (j) {
-            return j.nom === mess.nom;
-        });
-
-        if (mess.nom != '') {
-            if (indexjoueur == -1) {
-
-                var nJoueur = {
-                    nom: mess.nom,
-                    score: 0,
-                    ws: wsClient
-                };
-
-                this.joueurs.push(nJoueur);
-                indexjoueur = this.joueurs.findIndex(function (j) {
-                    return j.nom === mess.nom;
-                });
-                this.EnvoyerResultatDiff();
-            }
-            if (mess.reponse == this.bonneReponse) {
-                this.joueurs[indexjoueur].score += 1;
-                this.question = 'Bonne reponse de ' + mess.nom;
-                this.EnvoyerResultatDiff();
-                setTimeout(() => {  //affichage de la question 3s après 
-                    this.NouvelleQMult();
-                }, 1000);
-            }
-            else {
-                this.tempQuestion = this.question;
-                this.question = 'Mauvaise reponse de ' + mess.nom;
-                this.EnvoyerResultatDiff();
-                setTimeout(() => {  //affichage de la question 3s après 
-                    this.question = this.tempQuestion;
-                    this.EnvoyerResultatDiff();
-                }, 1000);
-            }
-
-        }
-        else {
-            this.tempQuestion = this.question;
-            this.question = 'Aucun nom renseigné';
-            this.EnvoyerResultatDiff();
-            setTimeout(() => {  //affichage de la question 3s après 
-                this.question = this.tempQuestion;
-                this.EnvoyerResultatDiff();
-            }, 1000);
-        }
-
-    };
-
-    NouvelleQMult() {
-        var x = this.GetRandomInt(11);
-        var y = this.GetRandomInt(11);
-        this.question = x + '*' + y + ' =  ?';
-        this.bonneReponse = x * y;
-        this.EnvoyerResultatDiff();
-    };
-
-    NouvelleQBase2to10() {
-        var rInt = this.GetRandomInt(255);
-        var b2 = this.ConvB2(rInt);
-        this.question = 'Convertir ' + b2 + ' en base 10';
-        this.bonneReponse = rInt;
-        this.EnvoyerResultatDiff();
-    };
-    ConvB2(nmbr) {
-        var b = '';
-        while (nmbr > 0) {
-            b += nmbr % 2;
-            nmbr = Math.floor(nmbr / 2);
-        }
-        let reversed = '';
-        for (let i = b.length - 1; i >= 0; i--) {
-            reversed += b[i];
-        }
-        return reversed;
-    }
-
-
-    // Envoyer a tous les joueurs un message comportant les resultats du jeu 
-    EnvoyerResultatDiff() {
-        // Recopie des joueurs dans un autre tableau joueursSimple sans l'objet WebSocket dans ws
-        var joueursSimple = new Array;
-        this.joueurs.forEach(function each(joueur) {
-            joueursSimple.push({
-                nom: joueur.nom,
-                score: joueur.score,
-            });
-        });
-        // Composition du message a envoyer 
-        var messagePourLesClients = {
-            joueurs: joueursSimple,
-            question: this.question
-        };
-        // Diffusion (Broadcast) aux joueurs connectés; 
-        this.joueurs.forEach(function each(joueur) {
-            if (joueur.ws != undefined) {
-                joueur.ws.send(JSON.stringify(messagePourLesClients), function
-                ack(error) {
-                    console.log('    -  %s-%s',
-                        joueur.ws._socket._peername.address, joueur.ws._socket._peername.port);
-                    if (error) {
-                        console.log('ERREUR websocket broadcast : %s',
-                            error.toString());
-                    }
-                });
-            }
-        });
-    }
-
-    Deconnecter() {
-
-    };
-}
+var Cjeuxqr = require('./jeuxqr.js');
+// instanciation du jeux QR 
+var jeuxQr = new Cjeuxqr; 
 
 /*  *********************** Serveur Web ***************************   */
 //
@@ -163,9 +38,10 @@ exp.ws('/echo', function (ws, req) {
     });
 
     ws.on('close', function (reasonCode, description) {
-        console.log('Deconnexion WebSocket %s sur le port %s',
-            req.connection.remoteAddress, req.connection.remotePort);
-    });
+        console.log('Deconnexion WebSocket %s sur le port %s', 
+        req.connection.remoteAddress, req.connection.remotePort);
+        jeuxQr.Deconnecter(ws);
+    }); 
 
 });
 
@@ -194,84 +70,8 @@ aWss.broadcast = function broadcast(data) {
     });
 };
 
-//var question = '?';
-//var bonneReponse = 0;
-
-// Connexion des clients a la WebSocket /qr et evenements associés
-// Questions/reponses
-//exp.ws('/qr', function (ws, req) {
-//    console.log('Connection WebSocket %s sur le port %s',
-//        req.connection.remoteAddress, req.connection.remotePort);
-//    NouvelleQBase2to10();
-
-//    ws.on('message', TraiterReponse);
-
-//    ws.on('close', function (reasonCode, description) {
-//        console.log('Deconnexion WebSocket %s sur le port %s',
-//            req.connection.remoteAddress, req.connection.remotePort);
-//    });
-
-
-//    function TraiterReponse(message) {
-//        console.log('De %s %s, message :%s', req.connection.remoteAddress,
-//            req.connection.remotePort, message);
-
-//        if (message == bonneReponse) {
-//            aWss.broadcast('Réponse juste');
-//            setTimeout(() => {
-//                console.log('waitTime');
-//                NouvelleQBase2to10();
-//            }, '1000');
-
-//        }
-//        else {
-//            aWss.broadcast('Réponse fausse');
-//            setTimeout(() => {
-//                console.log('waitTime');
-//                aWss.broadcast(question);
-//            }, '1000');
-
-//        }
-
-//    }
-//    function NouvelleQMult() {
-//        var x = GetRandomInt(11);
-//        var y = GetRandomInt(11);
-//        question = x + '*' + y + ' =  ?';
-//        bonneReponse = x * y;
-//        aWss.broadcast(question);
-//    }
-
-//    function NouvelleQBase2to10() {
-//        var rInt = GetRandomInt(255);
-//        var b2 = ConvB2(rInt);
-//        question = 'Convertir ' + b2 + ' en base 10';
-//        bonneReponse = rInt;
-//        aWss.broadcast(question);
-//    }
-
-//    function ConvB2(nmbr) {
-//        var b = '';
-//        while (nmbr > 0) {
-//            b += nmbr % 2;
-//            nmbr = Math.floor(nmbr/ 2);
-//        }
-//        let reversed = '';
-//        for (let i = b.length - 1; i >= 0; i--) {
-//            reversed += b[i];
-//        }
-//        return reversed;
-//    }
-
-//    function GetRandomInt(max) {
-//        return Math.floor(Math.random() * Math.floor(max));
-//    }
-
-//});
-
 /*  *************** serveur WebSocket express /qr *********************   */
 // 
-var jeuxQr = new CQr;
 exp.ws('/qr', function (ws, req) {
 
     console.log('Connection WebSocket %s sur le port %s', req.connection.remoteAddress,
